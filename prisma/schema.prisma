@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id            String    @id
+  payload       String    // JSON string
+  destination   String
+  status        String    @default("pending") // pending, processing, completed, dead_lettered
+  attemptCount  Int       @default(0)
+  nextAttemptAt DateTime?
+  secret        String    // signing secret for this event
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  attempts      Attempt[]
+}
+
+model Attempt {
+  id            String   @id @default(uuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id])
+  attemptNumber Int
+  timestamp     DateTime @default(now())
+  statusCode    Int?
+  error         String?
+  success       Boolean
+}
