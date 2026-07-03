@@ -1,9 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { generateEventId } from "../../lib/id-generator";
-import { deliver } from "../../services/delivery";
-import { logAttempt } from "../../services/attempt-logger";
-import prisma from "../../db/client";
-import { config } from "../../config";
+import { enqueueEvent } from "../../services/queue";
 
 export async function eventRoutes(app: FastifyInstance) {
   app.post("/events", async (request, reply) => {
@@ -18,30 +14,13 @@ export async function eventRoutes(app: FastifyInstance) {
       });
     }
 
-    const eventId = generateEventId();
+    // Enqueue — returns immediately, does NOT deliver synchronously
+    const eventId = await enqueueEvent({ payload, destination });
 
-    await prisma.event.create({
-      data: {
-        id: eventId,
-        payload: JSON.stringify(payload),
-        destination,
-        secret: config.webhookSecret,
-        status: "processing",
-      },
-    });
-
-    const result = await deliver(payload, destination);
-    await logAttempt(eventId, 1, result);
-
-    return reply.status(201).send({
+    return reply.status(202).send({
       eventId,
-      status: result.success ? "delivered" : "failed",
-      attempt: {
-        attemptNumber: 1,
-        success: result.success,
-        statusCode: result.statusCode,
-        error: result.error,
-      },
+      status: "queued",
+      message: "Event accepted for delivery",
     });
   });
 }
