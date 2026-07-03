@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "worker": "tsx src/services/worker.ts",
+    "worker": "tsx src/worker-runner.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
