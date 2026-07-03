@@ -1,5 +1,7 @@
 import Fastify from "fastify";
 import { eventRoutes } from "./routes/events";
+import { deadLetterRoutes } from "./routes/dead-letters";
+import { replayRoutes } from "./routes/replay";
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
@@ -9,6 +11,8 @@ export async function buildApp() {
   });
 
   await app.register(eventRoutes);
+  await app.register(deadLetterRoutes);
+  await app.register(replayRoutes);
 
   return app;
 }
